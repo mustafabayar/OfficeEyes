@@ -32,7 +32,11 @@ public class SensorService {
 
     public RichMessage getMovementStatus() {
         long now = Instant.now().toEpochMilli();
-        long duration = now - lastMovementSeen.get();
+        long lastSeen = lastMovementSeen.get();
+        if (lastSeen == 0) {
+            return Utility.defaultMessage;
+        }
+        long duration = now - lastSeen;
         return Utility.createRichMessage(duration);
     }
 

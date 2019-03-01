@@ -14,6 +14,8 @@ public class Utility {
     private static List<String> probablyOccupiedStatusTexts;
     private static List<String> freeStatusTexts;
 
+    public static RichMessage defaultMessage;
+
     static {
         occupiedStatusTexts = new ArrayList<>();
         occupiedStatusTexts.add("Try your chance with the kicker :)");
@@ -32,6 +34,9 @@ public class Utility {
         freeStatusTexts.add("Would you like me to reserve it for you?");
         freeStatusTexts.add("But it would be better if you keep working.");
         freeStatusTexts.add("Hurry up before it's too late!");
+
+        defaultMessage = new RichMessage();
+        defaultMessage.setText("FREE! But I didn't had time to check the last activity time.");
     }
 
     public static RichMessage createRichMessage(long milliseconds) {
