@@ -40,4 +40,14 @@ public class SensorService {
         return Utility.createRichMessage(duration);
     }
 
+    public boolean isFree() {
+        long now = Instant.now().toEpochMilli();
+        long lastSeen = lastMovementSeen.get();
+        long duration = now - lastSeen;
+        if (lastSeen == 0 || duration > 30000) {
+            return  true;
+        }
+        return false;
+    }
+
 }
