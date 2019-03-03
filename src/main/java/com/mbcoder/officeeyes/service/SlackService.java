@@ -1,5 +1,8 @@
 package com.mbcoder.officeeyes.service;
 
+import com.mbcoder.officeeyes.model.SlackRequest;
+import com.mbcoder.officeeyes.model.SlackResponse;
+import me.ramswaroop.jbot.core.slack.models.Attachment;
 import me.ramswaroop.jbot.core.slack.models.RichMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,36 +14,58 @@ public class SlackService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(SlackService.class);
 
+    public static final SlackResponse DEFAULT_ERROR_RESPONSE = new SlackResponse("Command is not supported!");
+
     @Autowired
     SensorService sensorService;
 
-    public RichMessage handleSlashCommand(String command) {
-        LOGGER.debug("New slash command received: {}", command);
+    @Autowired
+    ReminderService reminderService;
 
-        RichMessage richMessage;
+    public RichMessage handleSlashCommand(SlackRequest slackRequest) {
+        LOGGER.debug("New slash command received: {}", slackRequest.getCommand());
 
-        switch (command) {
+        SlackResponse slackResponse;
+        switch (slackRequest.getCommand()) {
             case "/pong":
-                richMessage = handlePongCommand();
-                richMessage.setResponseType("in_channel");
-                break;
-
             case "/pongme":
-                richMessage = handlePongCommand();
-                richMessage.setResponseType("ephemeral");
+                slackResponse = handlePongCommand();
+                if (checkReminder(slackRequest)) {
+                    String reminderResponse = reminderService.addReminder(slackRequest);
+                    Attachment attachment = new Attachment();
+                    attachment.setTitle("REMINDER");
+                    attachment.setText(reminderResponse);
+                    attachment.setColor("#2eb886");
+                    slackResponse.getAttachments().add(attachment);
+                }
                 break;
 
             default:
-                LOGGER.debug("Command: {} is not supported!", command);
-                richMessage = new RichMessage("Command is not supported!");
+                LOGGER.debug("Command: {} is not supported!", slackRequest.getCommand());
+                slackResponse = DEFAULT_ERROR_RESPONSE;
                 break;
         }
-
+        RichMessage richMessage = createRichMessage(slackResponse);
+        richMessage.setResponseType(slackRequest.getResponseType());
         return richMessage;
     }
 
-    private RichMessage handlePongCommand() {
-        RichMessage richMessage = sensorService.getMovementStatus();
+    private SlackResponse handlePongCommand() {
+        SlackResponse slackResponse = sensorService.getMovementStatus();
+        return slackResponse;
+    }
+
+    private boolean checkReminder(SlackRequest slackRequest) {
+        if (slackRequest.getText() != null && slackRequest.getText().equalsIgnoreCase("reminder")) {
+            return true;
+        }
+        return false;
+    }
+
+    private RichMessage createRichMessage(SlackResponse slackResponse) {
+        RichMessage richMessage = new RichMessage();
+        richMessage.setText(slackResponse.getText());
+        richMessage.setAttachments(slackResponse.getAttachments().stream().toArray(Attachment[]::new));
         return richMessage;
     }
 

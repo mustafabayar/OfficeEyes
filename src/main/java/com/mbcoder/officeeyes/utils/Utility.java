@@ -1,7 +1,7 @@
 package com.mbcoder.officeeyes.utils;
 
+import com.mbcoder.officeeyes.model.SlackResponse;
 import me.ramswaroop.jbot.core.slack.models.Attachment;
-import me.ramswaroop.jbot.core.slack.models.RichMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ public class Utility {
     private static List<String> probablyOccupiedStatusTexts;
     private static List<String> freeStatusTexts;
 
-    public static RichMessage defaultMessage;
+    public static SlackResponse defaultMessage;
 
     static {
         occupiedStatusTexts = new ArrayList<>();
@@ -28,6 +28,7 @@ public class Utility {
         probablyOccupiedStatusTexts.add("Go and check it yourself.");
         probablyOccupiedStatusTexts.add("Try it again few seconds later.");
         probablyOccupiedStatusTexts.add("Schrödinger's Ping Pong :)");
+        probablyOccupiedStatusTexts.add("You can never be sure.");
 
         freeStatusTexts = new ArrayList<>();
         freeStatusTexts.add("Unless invisible ninjas are playing it.");
@@ -35,57 +36,52 @@ public class Utility {
         freeStatusTexts.add("But it would be better if you keep working.");
         freeStatusTexts.add("Hurry up before it's too late!");
 
-        defaultMessage = new RichMessage();
-        defaultMessage.setText("FREE! But I didn't had time to check the last activity time.");
+        defaultMessage = new SlackResponse("FREE! But I didn't had time to check the last activity time.");
     }
 
-    public static RichMessage createRichMessage(long milliseconds) {
+    public static SlackResponse createSlackResponse(long milliseconds) {
         if (milliseconds < 0) {
             throw new IllegalArgumentException("Duration must be greater than zero!");
         }
 
-        RichMessage richMessage = new RichMessage();
+        SlackResponse slackResponse = new SlackResponse();
 
-        makeDecision(richMessage, milliseconds);
+        makeDecision(slackResponse, milliseconds);
 
-        return richMessage;
+        return slackResponse;
     }
 
-    public static void makeDecision(RichMessage richMessage, long milliseconds) {
-        Attachment[] attachments = null;
+    public static void makeDecision(SlackResponse slackResponse, long milliseconds) {
         boolean isFunnyText = Math.random() < 0.25;
-
-        if (isFunnyText) {
-            attachments = new Attachment[1];
-            attachments[0] = new Attachment();
-        }
 
         String decision = "Status Unknown!";
         if (milliseconds <= 15000) {
             decision = "OCCUPIED!";
             if (isFunnyText) {
-                attachments[0].setText(getOccupiedStatusText());
+                Attachment attachment = new Attachment();
+                attachment.setText(getOccupiedStatusText());
+                slackResponse.getAttachments().add(attachment);
             }
         } else if (15000 < milliseconds && milliseconds < 30000) {
             decision = "PROBABLY OCCUPIED!";
             if (isFunnyText) {
-                attachments[0].setText(getProbablyOccupiedStatusText());
+                Attachment attachment = new Attachment();
+                attachment.setText(getProbablyOccupiedStatusText());
+                slackResponse.getAttachments().add(attachment);
             }
         } else if (milliseconds >= 30000) {
             decision = "FREE!";
             if (isFunnyText) {
-                attachments[0].setText(getFreeStatusText());
+                Attachment attachment = new Attachment();
+                attachment.setText(getFreeStatusText());
+                slackResponse.getAttachments().add(attachment);
             }
         }
 
         String durationBreakdown = getDurationBreakdown(milliseconds);
 
         String response = String.format("%s Last seen activity was %s ago.", decision, durationBreakdown);
-        richMessage.setText(response);
-
-        if (attachments != null) {
-            richMessage.setAttachments(attachments);
-        }
+        slackResponse.setText(response);
     }
 
     public static String getDurationBreakdown(long milliseconds) {
@@ -138,7 +134,7 @@ public class Utility {
     }
 
     private static String getProbablyOccupiedStatusText() {
-        int index = getRandomIndex(3);
+        int index = getRandomIndex(4);
         return probablyOccupiedStatusTexts.get(index);
     }
 

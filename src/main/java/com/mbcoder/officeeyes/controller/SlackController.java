@@ -2,6 +2,7 @@ package com.mbcoder.officeeyes.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mbcoder.officeeyes.model.SlackRequest;
 import com.mbcoder.officeeyes.service.SlackService;
 import me.ramswaroop.jbot.core.slack.models.RichMessage;
 import org.slf4j.Logger;
@@ -33,7 +34,10 @@ public class SlackController {
                                              @RequestParam("command") String command,
                                              @RequestParam("text") String text,
                                              @RequestParam("response_url") String responseUrl) {
-        RichMessage richMessage = slackService.handleSlashCommand(command);
+
+        SlackRequest slackRequest = new SlackRequest(teamId, teamDomain, channelId, channelName, userId, userName, command, text, responseUrl);
+
+        RichMessage richMessage = slackService.handleSlashCommand(slackRequest);
 
         // For debugging purpose only
         if (LOGGER.isDebugEnabled()) {

@@ -1,5 +1,6 @@
 package com.mbcoder.officeeyes.service;
 
+import com.mbcoder.officeeyes.model.SlackResponse;
 import com.mbcoder.officeeyes.model.UltrasonicSensorData;
 import com.mbcoder.officeeyes.utils.Utility;
 import me.ramswaroop.jbot.core.slack.models.RichMessage;
@@ -30,14 +31,14 @@ public class SensorService {
         }
     }
 
-    public RichMessage getMovementStatus() {
+    public SlackResponse getMovementStatus() {
         long now = Instant.now().toEpochMilli();
         long lastSeen = lastMovementSeen.get();
         if (lastSeen == 0) {
             return Utility.defaultMessage;
         }
         long duration = now - lastSeen;
-        return Utility.createRichMessage(duration);
+        return Utility.createSlackResponse(duration);
     }
 
     public boolean isFree() {
