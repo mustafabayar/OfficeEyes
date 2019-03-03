@@ -3,10 +3,7 @@ package com.mbcoder.officeeyes.service;
 import com.mbcoder.officeeyes.model.SlackRequest;
 import me.ramswaroop.jbot.core.slack.models.RichMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -38,10 +35,12 @@ public class ReminderService {
 
     @Scheduled(fixedRateString = "10000")
     public void checkReminders() {
-        boolean free = sensorService.isFree();
-        if (free) {
-            this.reminders.forEach(this::sendReminder);
-            this.reminders.clear();
+        if (reminders.size() > 0) {
+            boolean free = sensorService.isFree();
+            if (free) {
+                reminders.forEach(this::sendReminder);
+                reminders.clear();
+            }
         }
     }
 

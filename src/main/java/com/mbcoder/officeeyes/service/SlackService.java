@@ -64,7 +64,7 @@ public class SlackService {
     }
 
     private boolean checkReminder(SlackRequest slackRequest) {
-        if (slackRequest.getText() != null && slackRequest.getText().equalsIgnoreCase("reminder")) {
+        if (slackRequest.getText() != null && slackRequest.getText().equals("reminder")) {
             return true;
         }
         return false;
