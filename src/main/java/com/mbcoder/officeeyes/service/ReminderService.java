@@ -51,10 +51,15 @@ public class ReminderService {
     }
 
     public String addReminder(SlackRequest slackRequest) {
-        if (isDuplicate(slackRequest)) {
-            return "This reminder is already registered!";
-        }
         Reminder reminder = new Reminder(Instant.now(), slackRequest);
+        if (reminders.contains(reminder)) {
+            // Remove the old reminder and add the new one for updated time.
+            // Deleted and added reminders are equals in means of request but not time.
+            // See Reminder.equals() for more info.
+            reminders.remove(reminder);
+            reminders.add(reminder);
+            return "This reminder was already registered but I have extended it's duration!";
+        }
         this.reminders.add(reminder);
         return "New reminder registered. I will inform you when the table is free.";
     }
@@ -65,21 +70,5 @@ public class ReminderService {
         richMessage.setResponseType(reminder.getRequest().getResponseType());
         HttpEntity<RichMessage> entity = new HttpEntity<>(richMessage, headers);
         ResponseEntity<String> response = restTemplate.postForObject(reminder.getRequest().getResponseUrl(), entity, ResponseEntity.class);
-    }
-
-    public boolean isDuplicate(SlackRequest slackRequest) {
-        for (Reminder reminder : reminders) {
-            SlackRequest request = reminder.getRequest();
-            if (request.getCommand().equals(slackRequest.getCommand())) {
-                if (request.getUserId().equals(slackRequest.getUserId())) {
-                    return true;
-                } else {
-                    if (request.getCommand().equals("/pong") && request.getChannelId().equals(slackRequest.getChannelId())) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 }

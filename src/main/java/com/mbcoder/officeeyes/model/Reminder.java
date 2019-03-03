@@ -31,4 +31,21 @@ public class Reminder {
     public void setRequest(SlackRequest request) {
         this.request = request;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Reminder) {
+            Reminder toCompare = (Reminder) o;
+            if (this.request.getCommand().equals(toCompare.getRequest().getCommand())) {
+                if (this.request.getUserId().equals(toCompare.getRequest().getUserId())) {
+                    return true;
+                } else {
+                    if (this.request.getCommand().equals("/pong") && this.request.getChannelId().equals(toCompare.getRequest().getChannelId())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }
