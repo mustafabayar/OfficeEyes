@@ -42,7 +42,8 @@ public class SlackService {
                         Attachment attachment = new Attachment();
                         attachment.setTitle("REMINDER");
                         attachment.setText(reminderResponse);
-                        attachment.setColor("#2eb886");
+                        attachment.setFooter("Reminders only last for 30 minutes before they destruct themselves");
+                        attachment.setColor("#20aa20");
                         slackResponse.getAttachments().add(attachment);
                     }
                 }
