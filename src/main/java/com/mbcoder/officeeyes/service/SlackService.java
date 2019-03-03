@@ -31,12 +31,20 @@ public class SlackService {
             case "/pongme":
                 slackResponse = handlePongCommand();
                 if (checkReminder(slackRequest)) {
-                    String reminderResponse = reminderService.addReminder(slackRequest);
-                    Attachment attachment = new Attachment();
-                    attachment.setTitle("REMINDER");
-                    attachment.setText(reminderResponse);
-                    attachment.setColor("#2eb886");
-                    slackResponse.getAttachments().add(attachment);
+                    if (sensorService.isFree()) {
+                        Attachment attachment = new Attachment();
+                        attachment.setTitle("REMINDER");
+                        attachment.setText("Reminder is not registered because table is already free.");
+                        attachment.setColor("#ff0000");
+                        slackResponse.getAttachments().add(attachment);
+                    } else {
+                        String reminderResponse = reminderService.addReminder(slackRequest);
+                        Attachment attachment = new Attachment();
+                        attachment.setTitle("REMINDER");
+                        attachment.setText(reminderResponse);
+                        attachment.setColor("#2eb886");
+                        slackResponse.getAttachments().add(attachment);
+                    }
                 }
                 break;
 
