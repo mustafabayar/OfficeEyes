@@ -3,6 +3,8 @@ package com.mbcoder.officeeyes.service;
 import com.mbcoder.officeeyes.model.Reminder;
 import com.mbcoder.officeeyes.model.SlackRequest;
 import me.ramswaroop.jbot.core.slack.models.RichMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @Service
 public class ReminderService {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(ReminderService.class);
 
     @Autowired
     SensorService sensorService;
@@ -69,6 +73,8 @@ public class ReminderService {
         richMessage.setText("Table is free now, hurry!");
         richMessage.setResponseType(reminder.getRequest().getResponseType());
         HttpEntity<RichMessage> entity = new HttpEntity<>(richMessage, headers);
+        LOGGER.debug("Sending reminder to Slack at url: {}", reminder.getRequest().getResponseUrl());
         ResponseEntity<String> response = restTemplate.postForObject(reminder.getRequest().getResponseUrl(), entity, ResponseEntity.class);
+        LOGGER.debug("Slack response to the reminder request: {}", response.getStatusCodeValue());
     }
 }

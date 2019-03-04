@@ -8,6 +8,7 @@ import me.ramswaroop.jbot.core.slack.models.RichMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +23,9 @@ public class SlackController {
     @Autowired
     SlackService slackService;
 
+    @Value("${officeeyes.inMaintenance}")
+    private boolean inMaintenance;
+
     @RequestMapping(value = "/slack/slash",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -34,8 +38,14 @@ public class SlackController {
                                              @RequestParam("command") String command,
                                              @RequestParam("text") String text,
                                              @RequestParam("response_url") String responseUrl) {
-
         SlackRequest slackRequest = new SlackRequest(teamId, teamDomain, channelId, channelName, userId, userName, command, text, responseUrl);
+
+        if (inMaintenance) {
+            RichMessage maintenance = new RichMessage();
+            maintenance.setText("I am under maintenance to provide better service");
+            maintenance.setResponseType(slackRequest.getResponseType());
+            return maintenance.encodedMessage();
+        }
 
         RichMessage richMessage = slackService.handleSlashCommand(slackRequest);
 
