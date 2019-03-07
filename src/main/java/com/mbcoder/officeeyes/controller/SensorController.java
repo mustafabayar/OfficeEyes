@@ -1,6 +1,6 @@
 package com.mbcoder.officeeyes.controller;
 
-import com.mbcoder.officeeyes.model.UltrasonicSensorData;
+import com.mbcoder.officeeyes.model.VibrationSensorData;
 import com.mbcoder.officeeyes.service.SensorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ public class SensorController {
     SensorService sensorService;
 
     @PostMapping(path = "/sensor/event/motion")
-    public ResponseEntity<?> handleEvent(@RequestBody UltrasonicSensorData sensorData) {
+    public ResponseEntity<?> handleEvent(@RequestBody VibrationSensorData sensorData) {
         LOGGER.debug("New event received from Sensor.");
 
         sensorService.handleSensorData(sensorData);

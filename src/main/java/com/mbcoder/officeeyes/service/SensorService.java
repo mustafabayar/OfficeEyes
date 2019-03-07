@@ -1,7 +1,7 @@
 package com.mbcoder.officeeyes.service;
 
 import com.mbcoder.officeeyes.model.SlackResponse;
-import com.mbcoder.officeeyes.model.UltrasonicSensorData;
+import com.mbcoder.officeeyes.model.VibrationSensorData;
 import com.mbcoder.officeeyes.utils.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +21,10 @@ public class SensorService {
         lastMovementSeen = new AtomicLong();
     }
 
-    public void handleSensorData(UltrasonicSensorData sensorData) {
+    public void handleSensorData(VibrationSensorData sensorData) {
         long epochTime = Instant.now().toEpochMilli();
         if (sensorData.hasMotion()) {
             LOGGER.debug("Motion detected.");
-            LOGGER.debug("Distance: {}", sensorData.getDistance());
             lastMovementSeen.set(epochTime);
         }
     }
