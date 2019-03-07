@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.TimeUnit;
+
 @RestController
 public class SlackController {
 
@@ -28,14 +32,15 @@ public class SlackController {
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public SlackResponse onReceiveSlashCommand(@RequestParam("team_id") String teamId,
-                                             @RequestParam("team_domain") String teamDomain,
-                                             @RequestParam("channel_id") String channelId,
-                                             @RequestParam("channel_name") String channelName,
-                                             @RequestParam("user_id") String userId,
-                                             @RequestParam("user_name") String userName,
-                                             @RequestParam("command") String command,
-                                             @RequestParam("text") String text,
-                                             @RequestParam("response_url") String responseUrl) {
+                                               @RequestParam("team_domain") String teamDomain,
+                                               @RequestParam("channel_id") String channelId,
+                                               @RequestParam("channel_name") String channelName,
+                                               @RequestParam("user_id") String userId,
+                                               @RequestParam("user_name") String userName,
+                                               @RequestParam("command") String command,
+                                               @RequestParam("text") String text,
+                                               @RequestParam("response_url") String responseUrl) {
+        long start = System.nanoTime();
         SlackRequest slackRequest = new SlackRequest(teamId, teamDomain, channelId, channelName, userId, userName, command, text, responseUrl);
 
         LOGGER.debug(slackRequest.toString());
@@ -49,6 +54,9 @@ public class SlackController {
         SlackResponse slackResponse = slackService.handleSlashCommand(slackRequest);
 
         LOGGER.debug(slackResponse.toString());
+
+        long finish = System.nanoTime();
+        LOGGER.debug("Elapsed Time: {}", TimeUnit.NANOSECONDS.toMillis(finish - start));
 
         return slackResponse;
     }
