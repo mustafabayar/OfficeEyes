@@ -8,12 +8,16 @@ public class Reminder {
 
     SlackRequest request;
 
+    boolean sentSuccessfully;
+
     public Reminder() {
+        this.sentSuccessfully = false;
     }
 
     public Reminder(Instant date, SlackRequest request) {
         this.date = date;
         this.request = request;
+        this.sentSuccessfully = false;
     }
 
     public Instant getDate() {
@@ -30,6 +34,14 @@ public class Reminder {
 
     public void setRequest(SlackRequest request) {
         this.request = request;
+    }
+
+    public boolean isSentSuccessfully() {
+        return sentSuccessfully;
+    }
+
+    public void setSentSuccessfully(boolean sentSuccessfully) {
+        this.sentSuccessfully = sentSuccessfully;
     }
 
     @Override

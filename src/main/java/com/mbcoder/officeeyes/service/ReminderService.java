@@ -74,7 +74,7 @@ public class ReminderService {
         richMessage.setResponseType(reminder.getRequest().getResponseType());
         HttpEntity<RichMessage> entity = new HttpEntity<>(richMessage, headers);
         LOGGER.debug("Sending reminder to Slack at url: {}", reminder.getRequest().getResponseUrl());
-        ResponseEntity<String> response = restTemplate.postForObject(reminder.getRequest().getResponseUrl(), entity, ResponseEntity.class);
+        ResponseEntity<String> response = restTemplate.exchange(reminder.getRequest().getResponseUrl(), HttpMethod.POST, entity, String.class);
         LOGGER.debug("Slack response to the reminder request: {}", response.getStatusCodeValue());
     }
 }
