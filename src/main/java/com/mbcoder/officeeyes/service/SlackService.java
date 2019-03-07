@@ -1,9 +1,8 @@
 package com.mbcoder.officeeyes.service;
 
-import com.mbcoder.officeeyes.model.SlackRequest;
-import com.mbcoder.officeeyes.model.SlackResponse;
-import me.ramswaroop.jbot.core.slack.models.Attachment;
-import me.ramswaroop.jbot.core.slack.models.RichMessage;
+import com.mbcoder.officeeyes.model.slack.SlackRequest;
+import com.mbcoder.officeeyes.model.slack.Attachment;
+import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,7 @@ public class SlackService {
     @Autowired
     ReminderService reminderService;
 
-    public RichMessage handleSlashCommand(SlackRequest slackRequest) {
+    public SlackResponse handleSlashCommand(SlackRequest slackRequest) {
         LOGGER.debug("New slash command received: {}", slackRequest.getCommand());
 
         SlackResponse slackResponse;
@@ -54,9 +53,9 @@ public class SlackService {
                 slackResponse = DEFAULT_ERROR_RESPONSE;
                 break;
         }
-        RichMessage richMessage = createRichMessage(slackResponse);
-        richMessage.setResponseType(slackRequest.getResponseType());
-        return richMessage;
+
+        slackResponse.setResponseType(slackRequest.getResponseType());
+        return slackResponse;
     }
 
     private SlackResponse handlePongCommand() {
@@ -69,13 +68,6 @@ public class SlackService {
             return true;
         }
         return false;
-    }
-
-    private RichMessage createRichMessage(SlackResponse slackResponse) {
-        RichMessage richMessage = new RichMessage();
-        richMessage.setText(slackResponse.getText());
-        richMessage.setAttachments(slackResponse.getAttachments().stream().toArray(Attachment[]::new));
-        return richMessage;
     }
 
 }

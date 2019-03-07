@@ -1,4 +1,4 @@
-package com.mbcoder.officeeyes.model;
+package com.mbcoder.officeeyes.model.slack;
 
 public class SlackRequest {
 
@@ -103,5 +103,20 @@ public class SlackRequest {
             return "ephemeral";
         }
         return "ephemeral";
+    }
+
+    @Override
+    public String toString() {
+        return "SlackRequest{" +
+                "teamId='" + teamId + '\'' +
+                ", teamDomain='" + teamDomain + '\'' +
+                ", channelId='" + channelId + '\'' +
+                ", channelName='" + channelName + '\'' +
+                ", userId='" + userId + '\'' +
+                ", userName='" + userName + '\'' +
+                ", command='" + command + '\'' +
+                ", text='" + text + '\'' +
+                ", responseUrl='" + responseUrl + '\'' +
+                '}';
     }
 }

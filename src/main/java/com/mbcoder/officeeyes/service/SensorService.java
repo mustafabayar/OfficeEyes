@@ -1,6 +1,6 @@
 package com.mbcoder.officeeyes.service;
 
-import com.mbcoder.officeeyes.model.SlackResponse;
+import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import com.mbcoder.officeeyes.model.VibrationSensorData;
 import com.mbcoder.officeeyes.utils.Utility;
 import org.slf4j.Logger;

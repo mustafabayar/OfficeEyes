@@ -1,8 +1,8 @@
 package com.mbcoder.officeeyes.service;
 
-import com.mbcoder.officeeyes.model.Reminder;
-import com.mbcoder.officeeyes.model.SlackRequest;
-import me.ramswaroop.jbot.core.slack.models.RichMessage;
+import com.mbcoder.officeeyes.model.slack.Reminder;
+import com.mbcoder.officeeyes.model.slack.SlackRequest;
+import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,12 +69,11 @@ public class ReminderService {
     }
 
     public void sendReminder(Reminder reminder) {
-        RichMessage richMessage = new RichMessage();
-        richMessage.setText("Table is free now, hurry!");
-        richMessage.setResponseType(reminder.getRequest().getResponseType());
-        HttpEntity<RichMessage> entity = new HttpEntity<>(richMessage, headers);
+        SlackResponse response = new SlackResponse("Table is free now, hurry!");
+        response.setResponseType(reminder.getRequest().getResponseType());
+        HttpEntity<SlackResponse> entity = new HttpEntity<>(response, headers);
         LOGGER.debug("Sending reminder to Slack at url: {}", reminder.getRequest().getResponseUrl());
-        ResponseEntity<String> response = restTemplate.exchange(reminder.getRequest().getResponseUrl(), HttpMethod.POST, entity, String.class);
-        LOGGER.debug("Slack response to the reminder request: {}", response.getStatusCodeValue());
+        ResponseEntity<String> answer = restTemplate.exchange(reminder.getRequest().getResponseUrl(), HttpMethod.POST, entity, String.class);
+        LOGGER.debug("Slack response to the reminder request: {}", answer.getStatusCodeValue());
     }
 }

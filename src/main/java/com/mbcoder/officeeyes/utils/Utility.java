@@ -1,7 +1,7 @@
 package com.mbcoder.officeeyes.utils;
 
-import com.mbcoder.officeeyes.model.SlackResponse;
-import me.ramswaroop.jbot.core.slack.models.Attachment;
+import com.mbcoder.officeeyes.model.slack.Attachment;
+import com.mbcoder.officeeyes.model.slack.SlackResponse;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,10 +1,8 @@
 package com.mbcoder.officeeyes.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mbcoder.officeeyes.model.SlackRequest;
+import com.mbcoder.officeeyes.model.slack.SlackRequest;
+import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import com.mbcoder.officeeyes.service.SlackService;
-import me.ramswaroop.jbot.core.slack.models.RichMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +27,7 @@ public class SlackController {
     @RequestMapping(value = "/slack/slash",
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public RichMessage onReceiveSlashCommand(@RequestParam("team_id") String teamId,
+    public SlackResponse onReceiveSlashCommand(@RequestParam("team_id") String teamId,
                                              @RequestParam("team_domain") String teamDomain,
                                              @RequestParam("channel_id") String channelId,
                                              @RequestParam("channel_name") String channelName,
@@ -40,25 +38,19 @@ public class SlackController {
                                              @RequestParam("response_url") String responseUrl) {
         SlackRequest slackRequest = new SlackRequest(teamId, teamDomain, channelId, channelName, userId, userName, command, text, responseUrl);
 
+        LOGGER.debug(slackRequest.toString());
+
         if (inMaintenance) {
-            RichMessage maintenance = new RichMessage();
-            maintenance.setText("I am under maintenance to provide better service");
+            SlackResponse maintenance = new SlackResponse("I am under maintenance to provide better service");
             maintenance.setResponseType(slackRequest.getResponseType());
-            return maintenance.encodedMessage();
+            return maintenance;
         }
 
-        RichMessage richMessage = slackService.handleSlashCommand(slackRequest);
+        SlackResponse slackResponse = slackService.handleSlashCommand(slackRequest);
 
-        // For debugging purpose only
-        if (LOGGER.isDebugEnabled()) {
-            try {
-                LOGGER.debug("Reply (RichMessage): {}", new ObjectMapper().writeValueAsString(richMessage));
-            } catch (JsonProcessingException e) {
-                LOGGER.debug("Error parsing RichMessage: ", e);
-            }
-        }
+        LOGGER.debug(slackResponse.toString());
 
-        return richMessage.encodedMessage();
+        return slackResponse;
     }
 
 }
