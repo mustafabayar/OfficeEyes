@@ -48,4 +48,13 @@ public class Reminder {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 31 * result + request.getCommand().hashCode();
+        result = 31 * result + request.getUserId().hashCode();
+        result = 31 * result + request.getChannelId().hashCode();
+        return result;
+    }
 }
