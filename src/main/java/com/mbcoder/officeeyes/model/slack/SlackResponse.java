@@ -83,6 +83,12 @@ public class SlackResponse {
         this.attachments = attachments;
     }
 
+    public void addAttachment(Attachment attachment) {
+        if (attachment != null) {
+            attachments.add(attachment);
+        }
+    }
+
     @Override
     public String toString() {
         return "SlackResponse{" +

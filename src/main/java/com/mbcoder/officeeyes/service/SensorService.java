@@ -2,7 +2,7 @@ package com.mbcoder.officeeyes.service;
 
 import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import com.mbcoder.officeeyes.model.VibrationSensorData;
-import com.mbcoder.officeeyes.utils.Utility;
+import com.mbcoder.officeeyes.utils.PingPongUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,10 +33,10 @@ public class SensorService {
         long now = Instant.now().toEpochMilli();
         long lastSeen = lastMovementSeen.get();
         if (lastSeen == 0) {
-            return Utility.defaultMessage;
+            return PingPongUtility.defaultMessage;
         }
         long duration = now - lastSeen;
-        return Utility.createSlackResponse(duration);
+        return PingPongUtility.createSlackResponse(duration);
     }
 
     public boolean isFree() {

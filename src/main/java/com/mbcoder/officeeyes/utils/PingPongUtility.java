@@ -8,11 +8,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class Utility {
+public class PingPongUtility {
 
     private static List<String> occupiedStatusTexts;
     private static List<String> probablyOccupiedStatusTexts;
     private static List<String> freeStatusTexts;
+    private static Random RANDOM = new Random();
 
     public static SlackResponse defaultMessage;
 
@@ -52,35 +53,24 @@ public class Utility {
     }
 
     public static void makeDecision(SlackResponse slackResponse, long milliseconds) {
-        boolean isFunnyText = Math.random() < 0.25;
-
-        String decision = "Status Unknown!";
+        Status status = Status.FREE;
         if (milliseconds <= 15000) {
-            decision = "OCCUPIED!";
-            if (isFunnyText) {
-                Attachment attachment = new Attachment();
-                attachment.setText(getOccupiedStatusText());
-                slackResponse.getAttachments().add(attachment);
-            }
+            status = Status.OCCUPIED;
         } else if (15000 < milliseconds && milliseconds < 30000) {
-            decision = "PROBABLY OCCUPIED!";
-            if (isFunnyText) {
-                Attachment attachment = new Attachment();
-                attachment.setText(getProbablyOccupiedStatusText());
-                slackResponse.getAttachments().add(attachment);
-            }
+            status = Status.PROBABLY_OCCUPIED;
         } else if (milliseconds >= 30000) {
-            decision = "FREE!";
-            if (isFunnyText) {
-                Attachment attachment = new Attachment();
-                attachment.setText(getFreeStatusText());
-                slackResponse.getAttachments().add(attachment);
-            }
+            status = Status.FREE;
+        }
+
+        if (Math.random() < 0.25) {
+            Attachment attachment = new Attachment();
+            attachment.setText(getStatusText(status));
+            slackResponse.addAttachment(attachment);
         }
 
         String durationBreakdown = getDurationBreakdown(milliseconds);
 
-        String response = String.format("%s Last seen activity was %s ago.", decision, durationBreakdown);
+        String response = String.format("%s! Last seen activity was %s ago.", status, durationBreakdown);
         slackResponse.setText(response);
     }
 
@@ -128,23 +118,20 @@ public class Utility {
         return sb.toString();
     }
 
-    private static String getOccupiedStatusText() {
-        int index = getRandomIndex(5);
-        return occupiedStatusTexts.get(index);
+    private static String getStatusText(Status status) {
+        String statusText = null;
+        switch (status) {
+            case FREE:
+                statusText = freeStatusTexts.get(RANDOM.nextInt(4));
+                break;
+            case OCCUPIED:
+                statusText = occupiedStatusTexts.get(RANDOM.nextInt(5));
+                break;
+            case PROBABLY_OCCUPIED:
+                statusText = probablyOccupiedStatusTexts.get(RANDOM.nextInt(4));
+                break;
+        }
+        return  statusText;
     }
 
-    private static String getProbablyOccupiedStatusText() {
-        int index = getRandomIndex(4);
-        return probablyOccupiedStatusTexts.get(index);
-    }
-
-    private static String getFreeStatusText() {
-        int index = getRandomIndex(4);
-        return freeStatusTexts.get(index);
-    }
-
-    private static int getRandomIndex(int range) {
-        Random rand = new Random();
-        return rand.nextInt(range);
-    }
 }

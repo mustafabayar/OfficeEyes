@@ -1,7 +1,7 @@
 package com.mbcoder.officeeyes.service;
 
-import com.mbcoder.officeeyes.model.slack.SlackRequest;
 import com.mbcoder.officeeyes.model.slack.Attachment;
+import com.mbcoder.officeeyes.model.slack.SlackRequest;
 import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,22 +29,9 @@ public class SlackService {
             case "/pong":
             case "/pongme":
                 slackResponse = handlePongCommand();
-                if (checkReminder(slackRequest)) {
-                    if (sensorService.isFree()) {
-                        Attachment attachment = new Attachment();
-                        attachment.setTitle("REMINDER");
-                        attachment.setText("Reminder is not registered because table is already free.");
-                        attachment.setColor("#ff0000");
-                        slackResponse.getAttachments().add(attachment);
-                    } else {
-                        String reminderResponse = reminderService.addReminder(slackRequest);
-                        Attachment attachment = new Attachment();
-                        attachment.setTitle("REMINDER");
-                        attachment.setText(reminderResponse);
-                        attachment.setFooter("Reminders only last for 30 minutes before they destruct themselves");
-                        attachment.setColor("#20aa20");
-                        slackResponse.getAttachments().add(attachment);
-                    }
+                if (slackRequest.getText() != null && !slackRequest.getText().isEmpty()) {
+                    Attachment attachment = handleText(slackRequest);
+                    slackResponse.addAttachment(attachment);
                 }
                 break;
 
@@ -63,11 +50,28 @@ public class SlackService {
         return slackResponse;
     }
 
-    private boolean checkReminder(SlackRequest slackRequest) {
-        if (slackRequest.getText() != null && slackRequest.getText().equals("reminder")) {
-            return true;
+    private Attachment handleText(SlackRequest slackRequest) {
+        Attachment attachment;
+        switch (slackRequest.getText()) {
+            case "remind":
+            case "reminder":
+                attachment = new Attachment();
+                attachment.setTitle("REMINDER");
+                if (sensorService.isFree()) {
+                    attachment.setText("Reminder is not registered because table is already free.");
+                    attachment.setColor("#ff0000"); // Red
+                } else {
+                    String reminderResponse = reminderService.addReminder(slackRequest);
+                    attachment.setText(reminderResponse);
+                    attachment.setFooter("Reminders only last for 30 minutes before they destruct themselves");
+                    attachment.setColor("#20aa20"); // Green
+                }
+                break;
+            default:
+                attachment = null;
+                break;
         }
-        return false;
+        return attachment;
     }
 
 }
