@@ -15,8 +15,6 @@ public class PingPongUtility {
     private static List<String> freeStatusTexts;
     private static Random RANDOM = new Random();
 
-    public static SlackResponse defaultMessage;
-
     static {
         occupiedStatusTexts = new ArrayList<>();
         occupiedStatusTexts.add("Try your chance with the kicker :)");
@@ -36,8 +34,6 @@ public class PingPongUtility {
         freeStatusTexts.add("Would you like me to reserve it for you?");
         freeStatusTexts.add("But it would be better if you keep working.");
         freeStatusTexts.add("Hurry up before it's too late!");
-
-        defaultMessage = new SlackResponse("FREE! But I didn't had time to check the last activity time.");
     }
 
     public static SlackResponse createSlackResponse(long milliseconds) {

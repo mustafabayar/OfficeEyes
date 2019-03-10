@@ -33,7 +33,7 @@ public class SensorService {
         long now = Instant.now().toEpochMilli();
         long lastSeen = lastMovementSeen.get();
         if (lastSeen == 0) {
-            return PingPongUtility.defaultMessage;
+            return new SlackResponse("FREE! But I didn't had time to check the last activity time.");
         }
         long duration = now - lastSeen;
         return PingPongUtility.createSlackResponse(duration);
