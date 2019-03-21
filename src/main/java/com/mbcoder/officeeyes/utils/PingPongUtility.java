@@ -13,6 +13,7 @@ public class PingPongUtility {
     private static List<String> occupiedStatusTexts;
     private static List<String> probablyOccupiedStatusTexts;
     private static List<String> freeStatusTexts;
+    private static List<String> samePersonResponse;
     private static Random RANDOM = new Random();
 
     static {
@@ -34,6 +35,13 @@ public class PingPongUtility {
         freeStatusTexts.add("Would you like me to reserve it for you?");
         freeStatusTexts.add("But it would be better if you keep working.");
         freeStatusTexts.add("Hurry up before it's too late!");
+
+        samePersonResponse = new ArrayList<>();
+        samePersonResponse.add("You must be extremely bored...");
+        samePersonResponse.add("You wanna play against yourself?");
+        samePersonResponse.add("Dude, not funny!");
+        samePersonResponse.add("Stop messing with me!");
+        samePersonResponse.add("Are you schizophrenic or what?!");
     }
 
     public static SlackResponse createSlackResponse(long milliseconds) {
@@ -114,7 +122,7 @@ public class PingPongUtility {
         return sb.toString();
     }
 
-    private static String getStatusText(Status status) {
+    public static String getStatusText(Status status) {
         String statusText = null;
         switch (status) {
             case FREE:
@@ -125,6 +133,9 @@ public class PingPongUtility {
                 break;
             case PROBABLY_OCCUPIED:
                 statusText = probablyOccupiedStatusTexts.get(RANDOM.nextInt(4));
+                break;
+            case SAME_PERSON:
+                statusText = samePersonResponse.get(RANDOM.nextInt(5));
                 break;
         }
         return  statusText;

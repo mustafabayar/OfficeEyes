@@ -1,11 +1,13 @@
 package com.mbcoder.officeeyes.model.slack;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Attachment {
     @JsonProperty("fallback")
@@ -35,8 +37,17 @@ public class Attachment {
     @JsonProperty("text")
     private String text;
 
+    @JsonProperty("attachment_type")
+    private String attachmentType;
+
+    @JsonProperty("callback_id")
+    private String callbackId;
+
     @JsonProperty("fields")
     private List<Field> fields;
+
+    @JsonProperty("actions")
+    private List<Action> actions;
 
     @JsonProperty("image_url")
     private String imageUrl;
@@ -58,7 +69,12 @@ public class Attachment {
 
     public Attachment() {
         fields = new ArrayList<>();
+        actions = new ArrayList<>();
         markdownIn = new ArrayList<>();
+    }
+
+    public void addAction(Action action) {
+        actions.add(action);
     }
 
     public String getFallback() {
@@ -133,6 +149,14 @@ public class Attachment {
         this.text = text;
     }
 
+    public String getAttachmentType() { return attachmentType; }
+
+    public void setAttachmentType(String attachmentType) { this.attachmentType = attachmentType; }
+
+    public String getCallbackId() { return callbackId; }
+
+    public void setCallbackId(String callbackId) { this.callbackId = callbackId; }
+
     public List<Field> getFields() {
         return this.fields;
     }
@@ -140,6 +164,10 @@ public class Attachment {
     public void setFields(List<Field> fields) {
         this.fields = fields;
     }
+
+    public List<Action> getActions() { return actions; }
+
+    public void setActions(List<Action> actions) { this.actions = actions; }
 
     public String getImageUrl() {
         return this.imageUrl;
@@ -187,5 +215,30 @@ public class Attachment {
 
     public void setMarkdownIn(List<String> markdownIn) {
         this.markdownIn = markdownIn;
+    }
+
+    @Override
+    public String toString() {
+        return "Attachment{" +
+                "fallback='" + fallback + '\'' +
+                ", color='" + color + '\'' +
+                ", pretext='" + pretext + '\'' +
+                ", authorName='" + authorName + '\'' +
+                ", authorLink='" + authorLink + '\'' +
+                ", authorIcon='" + authorIcon + '\'' +
+                ", title='" + title + '\'' +
+                ", titleLink='" + titleLink + '\'' +
+                ", text='" + text + '\'' +
+                ", attachmentType='" + attachmentType + '\'' +
+                ", callbackId='" + callbackId + '\'' +
+                ", fields=" + fields +
+                ", actions=" + actions +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", thumbUrl='" + thumbUrl + '\'' +
+                ", footer='" + footer + '\'' +
+                ", footerIcon='" + footerIcon + '\'' +
+                ", ts='" + ts + '\'' +
+                ", markdownIn=" + markdownIn +
+                '}';
     }
 }

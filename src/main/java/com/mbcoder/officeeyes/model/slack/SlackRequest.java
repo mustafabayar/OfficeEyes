@@ -97,7 +97,7 @@ public class SlackRequest {
     }
 
     public String getResponseType() {
-        if (command.equals("/pong")) {
+        if (command.equals("/pong") || command.equals("/ping")) {
             return "in_channel";
         } else if (command.equals("/pongme")) {
             return "ephemeral";

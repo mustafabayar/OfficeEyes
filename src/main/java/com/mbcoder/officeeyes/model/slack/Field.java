@@ -1,8 +1,10 @@
 package com.mbcoder.officeeyes.model.slack;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Field {
     @JsonProperty("title")
@@ -39,5 +41,14 @@ public class Field {
 
     public void setShort(boolean shortField) {
         this.shortField = shortField;
+    }
+
+    @Override
+    public String toString() {
+        return "Field{" +
+                "title='" + title + '\'' +
+                ", value='" + value + '\'' +
+                ", shortField=" + shortField +
+                '}';
     }
 }

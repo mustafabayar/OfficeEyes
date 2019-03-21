@@ -1,13 +1,18 @@
 package com.mbcoder.officeeyes.service;
 
-import com.mbcoder.officeeyes.model.slack.Attachment;
-import com.mbcoder.officeeyes.model.slack.SlackRequest;
-import com.mbcoder.officeeyes.model.slack.SlackResponse;
+import com.mbcoder.officeeyes.model.slack.*;
+import com.mbcoder.officeeyes.utils.PingPongUtility;
+import com.mbcoder.officeeyes.utils.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class SlackService {
@@ -15,6 +20,10 @@ public class SlackService {
     public static final Logger LOGGER = LoggerFactory.getLogger(SlackService.class);
 
     public static final SlackResponse DEFAULT_ERROR_RESPONSE = new SlackResponse("Command is not supported!");
+
+    private RestTemplate restTemplate = new RestTemplate();
+
+    private Map<String, SlackResponse> callbacks = new HashMap<>();
 
     @Autowired
     SensorService sensorService;
@@ -39,6 +48,10 @@ public class SlackService {
                 }
                 break;
 
+            case "/ping":
+                slackResponse = handlePingCommand(slackRequest);
+                break;
+
             default:
                 LOGGER.debug("Command: {} is not supported!", slackRequest.getCommand());
                 slackResponse = DEFAULT_ERROR_RESPONSE;
@@ -51,6 +64,31 @@ public class SlackService {
 
     private SlackResponse handlePongCommand() {
         SlackResponse slackResponse = sensorService.getMovementStatus();
+        return slackResponse;
+    }
+
+    private SlackResponse handlePingCommand(SlackRequest request) {
+        boolean isFree = sensorService.isFree();
+        if (!isFree) {
+            return new SlackResponse("The table is currently occupied, try later!");
+        }
+
+        SlackResponse slackResponse = new SlackResponse();
+        slackResponse.setTs(Long.toString(System.currentTimeMillis() / 1000L));
+
+        slackResponse.setText(String.format("<@%s> wants to play Ping-Pong!", request.getUserId()));
+
+        Attachment attachment = new Attachment();
+        attachment.setText(String.format("Please press the button if you want to play against <@%s>", request.getUserId()));
+        attachment.setFallback("You are unable to answer this request");
+        attachment.setCallbackId(request.getUserId());
+
+        Action action = new Action("button-join", "Join", "primary", "button", "To join a match");
+
+        attachment.addAction(action);
+        slackResponse.addAttachment(attachment);
+        callbacks.put(slackResponse.getTs(), slackResponse);
+
         return slackResponse;
     }
 
@@ -85,6 +123,54 @@ public class SlackService {
                 break;
         }
         return attachment;
+    }
+
+    public SlackResponse handleInteractiveRequest(InteractiveRequest interactiveRequest) {
+        if (interactiveRequest.getUser().getId().equals(interactiveRequest.getCallbackId())) {
+            SlackResponse failResponse = new SlackResponse(PingPongUtility.getStatusText(Status.SAME_PERSON));
+            failResponse.setDeleteOriginal(false);
+            failResponse.setReplaceOriginal(false);
+            failResponse.setResponseType("ephemeral");
+            return failResponse;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String key = interactiveRequest.getMessageTs().substring(0, interactiveRequest.getMessageTs().indexOf("."));
+        SlackResponse response = interactiveRequest.getOriginalMessage();
+        if (response == null) {
+            response = callbacks.get(key);
+            interactiveRequest.setOriginalMessage(response);
+            callbacks.remove(key);
+        }
+        response.getAttachments().clear();
+        Attachment attachment = new Attachment();
+        attachment.setColor("#20aa20"); // Green
+        attachment.setText(String.format("This challenge is accepted by <@%s>", interactiveRequest.getUser().getId()));
+        response.addAttachment(attachment);
+        HttpEntity<SlackResponse> entity = new HttpEntity<>(response, headers);
+        LOGGER.debug("Sending action response to Slack at url: {}", interactiveRequest.getResponseUrl());
+        ResponseEntity<String> answer = restTemplate.exchange(interactiveRequest.getResponseUrl(), HttpMethod.POST, entity, String.class);
+        LOGGER.debug("Slack response to the action response: {}", answer.getStatusCodeValue());
+
+        return sendResponseToThread(interactiveRequest);
+    }
+
+    private SlackResponse sendResponseToThread(InteractiveRequest interactiveRequest) {
+        SlackResponse response = new SlackResponse();
+        boolean isFree = sensorService.isFree();
+        if (!isFree) {
+            response.setText(String.format("<@%s> and <@%s> I am sorry but table got busy, try later!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            response.setReplaceOriginal(false);
+        } else {
+            response.setText(String.format("<@%s> and <@%s> GO GO GO!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            response.setReplaceOriginal(false);
+        }
+        response.setThreadTs(interactiveRequest.getMessageTs());
+        response.setResponseType("in_channel");
+
+        return response;
     }
 
 }

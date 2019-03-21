@@ -1,5 +1,7 @@
 package com.mbcoder.officeeyes.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mbcoder.officeeyes.model.slack.InteractiveRequest;
 import com.mbcoder.officeeyes.model.slack.SlackRequest;
 import com.mbcoder.officeeyes.model.slack.SlackResponse;
 import com.mbcoder.officeeyes.service.SlackService;
@@ -13,12 +15,16 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @RestController
 public class SlackController {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(SlackController.class);
+
+    @Autowired
+    ObjectMapper mapper;
 
     @Autowired
     SlackService slackService;
@@ -50,6 +56,39 @@ public class SlackController {
         }
 
         SlackResponse slackResponse = slackService.handleSlashCommand(slackRequest);
+
+        LOGGER.debug(slackResponse.toString());
+
+        long finish = System.nanoTime();
+        LOGGER.debug("Elapsed Time: {}", TimeUnit.NANOSECONDS.toMillis(finish - start));
+
+        return slackResponse;
+    }
+
+    @RequestMapping(value = "/slack/interactive",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public SlackResponse onReceiveInteractiveCommand(@RequestParam("payload") String payload) {
+        long start = System.nanoTime();
+
+
+        InteractiveRequest interactiveRequest;
+        try {
+            interactiveRequest = mapper.readValue(payload, InteractiveRequest.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new SlackResponse("Something went wrong");
+        }
+
+        LOGGER.debug(interactiveRequest.toString());
+
+        if (inMaintenance) {
+            SlackResponse maintenance = new SlackResponse("I am under maintenance to provide better service");
+            maintenance.setResponseType("in_channel");
+            return maintenance;
+        }
+
+        SlackResponse slackResponse = slackService.handleInteractiveRequest(interactiveRequest);
 
         LOGGER.debug(slackResponse.toString());
 
