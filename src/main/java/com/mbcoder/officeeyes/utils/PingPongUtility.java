@@ -58,11 +58,11 @@ public class PingPongUtility {
 
     public static void makeDecision(SlackResponse slackResponse, long milliseconds) {
         Status status = Status.FREE;
-        if (milliseconds <= 15000) {
+        if (milliseconds <= 20000) {
             status = Status.OCCUPIED;
-        } else if (15000 < milliseconds && milliseconds < 30000) {
+        } else if (20000 < milliseconds && milliseconds < 40000) {
             status = Status.PROBABLY_OCCUPIED;
-        } else if (milliseconds >= 30000) {
+        } else if (milliseconds >= 40000) {
             status = Status.FREE;
         }
 

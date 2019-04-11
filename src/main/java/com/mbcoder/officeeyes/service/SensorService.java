@@ -43,7 +43,7 @@ public class SensorService {
         long now = Instant.now().toEpochMilli();
         long lastSeen = lastMovementSeen.get();
         long duration = now - lastSeen;
-        if (lastSeen == 0 || duration > 30000) {
+        if (lastSeen == 0 || duration > 45000) {
             return  true;
         }
         return false;
