@@ -11,7 +11,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -43,8 +45,11 @@ public class SlackService {
             case "/pongme":
                 slackResponse = handlePongCommand();
                 if (slackRequest.getText() != null && !slackRequest.getText().isEmpty()) {
-                    Attachment attachment = handleText(slackRequest);
-                    slackResponse.addAttachment(attachment);
+                    List<Attachment> attachments = handleText(slackRequest);
+                    attachments.forEach(slackResponse::addAttachment);
+                    if (slackRequest.getText().equals("help") || slackRequest.getText().equals("man") || slackRequest.getText().equals("manual")) {
+                        slackResponse.setText(":slack: OfficeEyes Manual :slack:");
+                    }
                 }
                 break;
 
@@ -92,12 +97,12 @@ public class SlackService {
         return slackResponse;
     }
 
-    private Attachment handleText(SlackRequest slackRequest) {
-        Attachment attachment = null;
+    private List<Attachment> handleText(SlackRequest slackRequest) {
+        List<Attachment> attachments = new ArrayList<>();
         switch (slackRequest.getText()) {
             case "remind":
             case "reminder":
-                attachment = new Attachment();
+                Attachment attachment = new Attachment();
                 attachment.setTitle("REMINDER");
                 if (sensorService.isFree()) {
                     attachment.setText("Reminder is not registered because table is already free.");
@@ -108,21 +113,45 @@ public class SlackService {
                     attachment.setFooter("Reminders only last for 30 minutes before they destruct themselves");
                     attachment.setColor("#20aa20"); // Green
                 }
+                attachments.add(attachment);
                 break;
-            case "release":
-                if (slackRequest.getUserName().equals(admin)) {
-                    attachment = new Attachment();
-                    attachment.setTitle(":slack: NEW FEATURE :slack:");
-                    attachment.setTitleLink("https://github.com/mustafabayar/OfficeEyes");
-                    attachment.setText("Ladies and Gentlemen :knock:\nI am happy to announce my new feature `REMINDER`. You want to play :table_tennis_paddle_and_ball: but the table is occupied? But you also don't want to constantly check if it is empty? No more worries, now I am able to notify you when it gets empty :fidget_spinner:.\nAll you need to type `/pong reminder` or `/pong remind`. If you use `/pong` command the answer will be sent to the channel, if you use `/pongme reminder` only you will see the answer. Reminders are only last for 30 minutes. Which means if you register a reminder but the table did not get free for the next 30 minutes, I will throw the reminder to the garbage. If you register another reminder while you still have an active reminder, I will extend the time of previous reminder. You can have this cool feature only for 0.99 Cent :troll: \nJust kidding, it is available right away! :tada:");
-                    attachment.setFooter("MBcoder");
-                    attachment.setFooterIcon("https://platform.slack-edge.com/img/default_application_icon.png");
-                    attachment.setColor("#0000ff"); // Blue
-                    attachment.setTs(Long.toString(System.currentTimeMillis() / 1000L));
-                }
+            case "help":
+            case "man":
+            case "manual":
+                Attachment attachment0 = new Attachment();
+                attachment0.setTitle("Please go to the Github page if you want to contribute to the project.");
+                attachment0.setTitleLink("https://github.com/mustafabayar/OfficeEyes");
+                attachment0.setText("If you have any suggestion for improvement please ask in the <#C12SL4810> channel or reach to <@UEKALNKB8>");
+                attachment0.setFooter("All of the below commands can be executed anywhere in the Slack. You don't have to use them in pingpong channel.");
+                attachment0.setColor("#00cc00");
+                attachments.add(attachment0);
+
+                Attachment attachment1 = new Attachment();
+                attachment1.setTitle("1) /pong & /pongme");
+                attachment1.setText("Usage: `/pong` or `/pongme`\nThese are basic commands for checking the status of ping-pong table. Former sends the reply as public to the channel in which the command is initiated while the latter sends the reply as private to the initiator. All of the below features can be used both with `pong` and `pongme` commands.");
+                attachment1.setColor("#0000ff");
+                attachments.add(attachment1);
+
+                Attachment attachment2 = new Attachment();
+                attachment2.setTitle("2) remind & reminder");
+                attachment2.setText("Usage: `/pong reminder` or `/pongme reminder`\nReminder is a service that informs you when the table gets free. If you try to set a reminder while the table is already free, it will warn you and reminder will not be set. If you successfully set a reminder, application will reply to the channel or chat in which the command is initiated when the table gets free. If you set a reminder but the table did not get empty for the next 30 minutes, reminder will be deleted and you will not be informed anymore. If you try to create a new reminder while you still have an active reminder, it will extend the duration of the existing reminder.");
+                attachment2.setColor("#0000ff");
+                attachments.add(attachment2);
+
+                Attachment attachment3 = new Attachment();
+                attachment3.setTitle("3) /ping");
+                attachment3.setText("Usage: `/ping`\nIt creates a interactive message for someone to accept your challenge. When the challenge is accepted, it tags both users in a reply to inform them. The benefit of using `/ping` command over a good old pinging is that it also checks if the table is free or not, and if the table is occupied it won't create the challenge. It also checks the status of the table second time when a user accepts the challenge so that they can be sure that table is free or not.");
+                attachment3.setColor("#0000ff");
+                attachments.add(attachment3);
+
+                Attachment attachment4 = new Attachment();
+                attachment4.setTitle("4) help & manual & man");
+                attachment4.setText("Usage: `/pong help` or `/pongme help`\nPrints this document.");
+                attachment4.setColor("#ff0000");
+                attachments.add(attachment4);
                 break;
         }
-        return attachment;
+        return attachments;
     }
 
     public SlackResponse handleInteractiveRequest(InteractiveRequest interactiveRequest) {

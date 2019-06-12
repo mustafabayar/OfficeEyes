@@ -130,9 +130,6 @@ public class SlackResponse {
     public void addAttachment(Attachment attachment) {
         if (attachment != null) {
             attachments.add(attachment);
-            if (attachment.getTitle() != null && attachment.getTitle().equals(":slack: NEW FEATURE :slack:")) {
-                text = "Thanks for asking Mustafa, here is the latest feature:";
-            }
         }
     }
 
