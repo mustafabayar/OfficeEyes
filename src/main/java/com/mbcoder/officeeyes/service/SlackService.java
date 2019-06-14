@@ -27,6 +27,8 @@ public class SlackService {
 
     private Map<String, SlackResponse> callbacks = new HashMap<>();
 
+    private Map<String, List<String>> kickerCallbacks = new HashMap<>();
+
     @Autowired
     SensorService sensorService;
 
@@ -55,6 +57,10 @@ public class SlackService {
 
             case "/ping":
                 slackResponse = handlePingCommand(slackRequest);
+                break;
+
+            case "/kicker":
+                slackResponse = handleKickCommand(slackRequest);
                 break;
 
             default:
@@ -92,6 +98,52 @@ public class SlackService {
 
         attachment.addAction(action);
         slackResponse.addAttachment(attachment);
+        callbacks.put(slackResponse.getTs(), slackResponse);
+
+        return slackResponse;
+    }
+
+    private SlackResponse handleKickCommand(SlackRequest request) {
+        SlackResponse slackResponse = new SlackResponse();
+        slackResponse.setTs(Long.toString(System.currentTimeMillis() / 1000L));
+
+        slackResponse.setText("New kicker game created. Feel free to join!");
+
+        Attachment attachment0 = new Attachment();
+        attachment0.setTitle(String.format("<@%s> joined!", request.getUserId()));
+        Action action0 = new Action("button-leave0", "Leave", "danger", "button", request.getUserId());
+        attachment0.addAction(action0);
+        slackResponse.addAttachment(attachment0);
+        attachment0.setCallbackId("kicker");
+        attachment0.setColor("#20aa20"); // Green
+
+        Attachment attachment1 = new Attachment();
+        attachment1.setTitle("Slot 2");
+        attachment1.setFallback("You are unable to answer this request");
+        Action action1 = new Action("button-join1", "Join", "primary", "button", "To join a match");
+        attachment1.addAction(action1);
+        slackResponse.addAttachment(attachment1);
+        attachment1.setCallbackId("kicker");
+
+        Attachment attachment2 = new Attachment();
+        attachment2.setTitle("Slot 3");
+        attachment2.setFallback("You are unable to answer this request");
+        Action action2 = new Action("button-join2", "Join", "primary", "button", "To join a match");
+        attachment2.addAction(action2);
+        slackResponse.addAttachment(attachment2);
+        attachment2.setCallbackId("kicker");
+
+        Attachment attachment3 = new Attachment();
+        attachment3.setTitle("Slot 4");
+        attachment3.setFallback("You are unable to answer this request");
+        Action action3 = new Action("button-join3", "Join", "primary", "button", "To join a match");
+        attachment3.addAction(action3);
+        slackResponse.addAttachment(attachment3);
+        attachment3.setCallbackId("kicker");
+
+        List<String> kickerCallers = new ArrayList<>();
+        kickerCallers.add(request.getUserId());
+        kickerCallbacks.put(slackResponse.getTs(), kickerCallers);
         callbacks.put(slackResponse.getTs(), slackResponse);
 
         return slackResponse;
@@ -155,6 +207,10 @@ public class SlackService {
     }
 
     public SlackResponse handleInteractiveRequest(InteractiveRequest interactiveRequest) {
+        if (interactiveRequest.getCallbackId().equals("kicker")) {
+            return handleMultipleInteractiveRequest(interactiveRequest);
+        }
+
         if (interactiveRequest.getUser().getId().equals(interactiveRequest.getCallbackId())) {
             SlackResponse failResponse = new SlackResponse(PingPongUtility.getStatusText(Status.SAME_PERSON));
             failResponse.setDeleteOriginal(false);
@@ -186,19 +242,112 @@ public class SlackService {
         return sendResponseToThread(interactiveRequest);
     }
 
+    public SlackResponse handleMultipleInteractiveRequest(InteractiveRequest interactiveRequest) {
+        String key = interactiveRequest.getMessageTs().substring(0, interactiveRequest.getMessageTs().indexOf("."));
+        SlackResponse response = interactiveRequest.getOriginalMessage();
+        if (response == null) {
+            response = callbacks.get(key);
+            interactiveRequest.setOriginalMessage(response);
+        }
+
+        List<String> players = kickerCallbacks.get(key);
+
+        Attachment modifiedAttachment;
+        switch (interactiveRequest.getActions().get(0).getName()) {
+            case "button-join0":
+            case "button-leave0":
+                modifiedAttachment = response.getAttachments().get(0);
+                break;
+            case "button-join1":
+            case "button-leave1":
+                modifiedAttachment = response.getAttachments().get(1);
+                break;
+            case "button-join2":
+            case "button-leave2":
+                modifiedAttachment = response.getAttachments().get(2);
+                break;
+            case "button-join3":
+            case "button-leave3":
+                modifiedAttachment = response.getAttachments().get(3);
+                break;
+            default:
+                SlackResponse failResponse = new SlackResponse("Something is wrong.");
+                failResponse.setDeleteOriginal(false);
+                failResponse.setReplaceOriginal(false);
+                failResponse.setResponseType("ephemeral");
+                return failResponse;
+        }
+
+        Action action = modifiedAttachment.getActions().get(0);
+        if (action.getName().contains("join")) {
+            if (players.contains(interactiveRequest.getUser().getId())) {
+                SlackResponse failResponse = new SlackResponse(PingPongUtility.getStatusText(Status.SAME_PERSON));
+                failResponse.setDeleteOriginal(false);
+                failResponse.setReplaceOriginal(false);
+                failResponse.setResponseType("ephemeral");
+                return failResponse;
+            }
+            modifiedAttachment.setColor("#20aa20"); // Green
+            modifiedAttachment.getActions().clear();
+            Action leaveAction = new Action("button-leave" + response.getAttachments().indexOf(modifiedAttachment), "Leave", "danger", "button", interactiveRequest.getUser().getId());
+            modifiedAttachment.getActions().add(leaveAction);
+            modifiedAttachment.setTitle(String.format("<@%s> joined!", interactiveRequest.getUser().getId()));
+            players.add(interactiveRequest.getUser().getId());
+            kickerCallbacks.put(key, players);
+        } else {
+            if (interactiveRequest.getUser().getId().equals(action.getValue())) {
+                modifiedAttachment.setColor("#DCDCDC"); // Gray
+                modifiedAttachment.getActions().clear();
+                Action joinAction = new Action("button-join" + response.getAttachments().indexOf(modifiedAttachment), "Join", "primary", "button", "To join a match");
+                modifiedAttachment.getActions().add(joinAction);
+                modifiedAttachment.setTitle(String.format("<@%s> left!", interactiveRequest.getUser().getId()));
+                players.remove(interactiveRequest.getUser().getId());
+                kickerCallbacks.put(key, players);
+            } else {
+                SlackResponse failResponse = new SlackResponse("Only the slot owner can leave the slot.");
+                failResponse.setDeleteOriginal(false);
+                failResponse.setReplaceOriginal(false);
+                failResponse.setResponseType("ephemeral");
+                return failResponse;
+            }
+
+        }
+
+        if(players.size() == 4) {
+            response.getAttachments().stream().forEach(attachment -> attachment.getActions().clear());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<SlackResponse> entity = new HttpEntity<>(response, headers);
+            LOGGER.debug("Sending action response to Slack at url: {}", interactiveRequest.getResponseUrl());
+            ResponseEntity<String> answer = restTemplate.exchange(interactiveRequest.getResponseUrl(), HttpMethod.POST, entity, String.class);
+            LOGGER.debug("Slack response to the action response: {}", answer.getStatusCodeValue());
+            callbacks.remove(key);
+            return sendKickerResponseToThread(interactiveRequest, players);
+        }
+
+        return response;
+    }
+
     private SlackResponse sendResponseToThread(InteractiveRequest interactiveRequest) {
         SlackResponse response = new SlackResponse();
         boolean isFree = sensorService.isFree();
         if (!isFree) {
             response.setText(String.format("<@%s> and <@%s> I am sorry but table got busy, try later!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
-            response.setReplaceOriginal(false);
         } else {
             response.setText(String.format("<@%s> and <@%s> GO GO GO!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
-            response.setReplaceOriginal(false);
         }
+        response.setReplaceOriginal(false);
         response.setThreadTs(interactiveRequest.getMessageTs());
         response.setResponseType("in_channel");
+        return response;
+    }
 
+    private SlackResponse sendKickerResponseToThread(InteractiveRequest interactiveRequest, List<String> players) {
+        SlackResponse response = new SlackResponse();
+        response.setText(String.format("<@%s>, <@%s>, <@%s>, <@%s> GO GO GO!", players.get(0), players.get(1), players.get(2), players.get(3)));
+        response.setReplaceOriginal(false);
+        response.setThreadTs(interactiveRequest.getMessageTs());
+        response.setResponseType("in_channel");
         return response;
     }
 
