@@ -16,12 +16,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 public class SlackController {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(SlackController.class);
+
+    private static final List<String> ALLOWED_CHANNELS = Stream.of("directmessage", "pingpong", "kicker", "privategroup").collect(Collectors.toList());
 
     @Autowired
     ObjectMapper mapper;
@@ -44,10 +49,14 @@ public class SlackController {
                                                @RequestParam("command") String command,
                                                @RequestParam("text") String text,
                                                @RequestParam("response_url") String responseUrl) {
-        long start = System.nanoTime();
         SlackRequest slackRequest = new SlackRequest(teamId, teamDomain, channelId, channelName, userId, userName, command, text, responseUrl);
+        LOGGER.info(slackRequest.toString());
 
-        LOGGER.debug(slackRequest.toString());
+        if (!ALLOWED_CHANNELS.contains(channelName)) {
+            SlackResponse warning = new SlackResponse("This request is only available on certain places. Such as: Direct Messages, <#C12SL4810> Channel, <#C0AEHJ8D7> Channel and Private Channels.");
+            warning.setResponseType("ephemeral");
+            return warning;
+        }
 
         if (inMaintenance) {
             SlackResponse maintenance = new SlackResponse("I am under maintenance to provide better service");
@@ -57,10 +66,7 @@ public class SlackController {
 
         SlackResponse slackResponse = slackService.handleSlashCommand(slackRequest);
 
-        LOGGER.debug(slackResponse.toString());
-
-        long finish = System.nanoTime();
-        LOGGER.debug("Elapsed Time: {}", TimeUnit.NANOSECONDS.toMillis(finish - start));
+        LOGGER.info(slackResponse.toString());
 
         return slackResponse;
     }
@@ -69,9 +75,6 @@ public class SlackController {
             method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public SlackResponse onReceiveInteractiveCommand(@RequestParam("payload") String payload) {
-        long start = System.nanoTime();
-
-
         InteractiveRequest interactiveRequest;
         try {
             interactiveRequest = mapper.readValue(payload, InteractiveRequest.class);
@@ -80,7 +83,7 @@ public class SlackController {
             return new SlackResponse("Something went wrong");
         }
 
-        LOGGER.debug(interactiveRequest.toString());
+        LOGGER.info(interactiveRequest.toString());
 
         if (inMaintenance) {
             SlackResponse maintenance = new SlackResponse("I am under maintenance to provide better service");
@@ -90,10 +93,7 @@ public class SlackController {
 
         SlackResponse slackResponse = slackService.handleInteractiveRequest(interactiveRequest);
 
-        LOGGER.debug(slackResponse.toString());
-
-        long finish = System.nanoTime();
-        LOGGER.debug("Elapsed Time: {}", TimeUnit.NANOSECONDS.toMillis(finish - start));
+        LOGGER.info(slackResponse.toString());
 
         return slackResponse;
     }
