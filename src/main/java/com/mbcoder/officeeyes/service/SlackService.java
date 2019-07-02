@@ -314,6 +314,7 @@ public class SlackService {
         }
 
         if(players.size() == 4) {
+            response.setText("Enjoy the game! :soccer:");
             response.getAttachments().stream().forEach(attachment -> attachment.getActions().clear());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
