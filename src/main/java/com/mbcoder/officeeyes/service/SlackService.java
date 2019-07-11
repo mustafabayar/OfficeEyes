@@ -90,13 +90,18 @@ public class SlackService {
         slackResponse.setText(String.format("<@%s> wants to play Ping-Pong!", request.getUserId()));
 
         Attachment attachment = new Attachment();
-        attachment.setText(String.format("Please press the button if you want to play against <@%s>", request.getUserId()));
+        attachment.setText("Please make a selection:");
         attachment.setFallback("You are unable to answer this request");
         attachment.setCallbackId(request.getUserId());
 
         Action action = new Action("button-join", "Join", "primary", "button", "To join a match");
-
         attachment.addAction(action);
+
+        if (request.getChannelName().equalsIgnoreCase("directmessage")) {
+            Action decline = new Action("button-decline", "Reject", "danger", "button", "To reject the match offer");
+            attachment.addAction(decline);
+        }
+
         slackResponse.addAttachment(attachment);
         callbacks.put(slackResponse.getTs(), slackResponse);
 
@@ -229,6 +234,22 @@ public class SlackService {
             interactiveRequest.setOriginalMessage(response);
             callbacks.remove(key);
         }
+
+        if (interactiveRequest.getActions().get(0).getName().equalsIgnoreCase("button-decline")) {
+            response.setText("Maybe next time ¯\\_(ツ)_/¯");
+            response.getAttachments().clear();
+            Attachment attachment = new Attachment();
+            attachment.setColor("#ff0000"); // red
+            attachment.setText("This challenge is rejected");
+            response.addAttachment(attachment);
+            HttpEntity<SlackResponse> entity = new HttpEntity<>(response, headers);
+            LOGGER.debug("Sending action response to Slack at url: {}", interactiveRequest.getResponseUrl());
+            ResponseEntity<String> answer = restTemplate.exchange(interactiveRequest.getResponseUrl(), HttpMethod.POST, entity, String.class);
+            LOGGER.debug("Slack response to the action response: {}", answer.getStatusCodeValue());
+            return sendResponseToThread(interactiveRequest, false);
+        }
+
+        response.setText("Enjoy the game! :table_tennis_paddle_and_ball:");
         response.getAttachments().clear();
         Attachment attachment = new Attachment();
         attachment.setColor("#20aa20"); // Green
@@ -239,7 +260,7 @@ public class SlackService {
         ResponseEntity<String> answer = restTemplate.exchange(interactiveRequest.getResponseUrl(), HttpMethod.POST, entity, String.class);
         LOGGER.debug("Slack response to the action response: {}", answer.getStatusCodeValue());
 
-        return sendResponseToThread(interactiveRequest);
+        return sendResponseToThread(interactiveRequest, true);
     }
 
     public SlackResponse handleMultipleInteractiveRequest(InteractiveRequest interactiveRequest) {
@@ -329,13 +350,21 @@ public class SlackService {
         return response;
     }
 
-    private SlackResponse sendResponseToThread(InteractiveRequest interactiveRequest) {
+    private SlackResponse sendResponseToThread(InteractiveRequest interactiveRequest, boolean accepted) {
         SlackResponse response = new SlackResponse();
         boolean isFree = sensorService.isFree();
         if (!isFree) {
-            response.setText(String.format("<@%s> and <@%s> I am sorry but table got busy, try later!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            if (accepted == true) {
+                response.setText(String.format("<@%s> and <@%s> I am sorry but table got busy, try later!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            } else {
+                response.setText(String.format("<@%s>, Sorry but <@%s> rejected your request.", interactiveRequest.getCallbackId(), interactiveRequest.getUser().getId()));
+            }
         } else {
-            response.setText(String.format("<@%s> and <@%s> GO GO GO!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            if (accepted == true) {
+                response.setText(String.format("<@%s> and <@%s> GO GO GO!", interactiveRequest.getUser().getId(), interactiveRequest.getCallbackId()));
+            } else {
+                response.setText(String.format("<@%s>, Sorry but <@%s> rejected your request.", interactiveRequest.getCallbackId(), interactiveRequest.getUser().getId()));
+            }
         }
         response.setReplaceOriginal(false);
         response.setThreadTs(interactiveRequest.getMessageTs());
